@@ -71,6 +71,6 @@ if __name__ == "__main__":
     csv_path = exportar_cubo_a_csv()
 
     # Si NO quieres que haga push automático, comenta la siguiente línea:
-    git_commit_and_push(csv_path)
+    # git_commit_and_push(csv_path)
 
     print("Proceso completado.")
