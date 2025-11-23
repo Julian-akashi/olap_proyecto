@@ -1,24 +1,22 @@
-import streamlit as st 
+import streamlit as st
 import pandas as pd
-from sqlalchemy import create_engine
 
-# -----------------------
-# Conexión a MySQL
-# -----------------------
-user = "etl_user"
-password = "TuPasswordFuerte"
-host = "192.168.0.128"
-port = 3307
-database = "dw_soporte"   # BD donde está vw_cubo_proyectos
-
-engine = create_engine(
-    f"mysql+mysqlconnector://{user}:{password}@{host}:{port}/{database}"
-)
+# -------------------------------------------------
+# Carga de datos desde CSV (exportado de MySQL)
+# -------------------------------------------------
+# Asegúrate de que el archivo "vw_cubo_proyectos.csv"
+# esté en la MISMA carpeta que este olap.py
+# y que tenga las mismas columnas que la vista:
+# anio, trimestre, fecha_completa, industria, estado,
+# nombre_cliente, tipo_proyecto, nombre_equipo,
+# nombre_proyecto, presupuesto, costo_real,
+# desviacion_presupuestal, horas_estimadas_total,
+# horas_reales_total, defectos_reportados, costo_defecto, etc.
 
 @st.cache_data
 def cargar_cubo():
-    query = "SELECT * FROM vw_cubo_proyectos"
-    df = pd.read_sql(query, engine)
+    # Lee el CSV
+    df = pd.read_csv("vw_cubo_proyectos.csv")
 
     # Asegurar tipo datetime y crear nombre de mes
     df["fecha_completa"] = pd.to_datetime(df["fecha_completa"])
@@ -30,6 +28,12 @@ def cargar_cubo():
     }
     df["nombre_mes"] = df["fecha_completa"].dt.month.map(mapa_meses)
 
+    # Mapear estado 0/1 a texto (opcional, pero útil)
+    # 1 = Completado, 0 = En progreso (ajusta si tu lógica es distinta)
+    if "estado" in df.columns:
+        df["estado_texto"] = df["estado"].map({1: "Completado", 0: "En progreso"})
+        df["estado_texto"] = df["estado_texto"].fillna("Desconocido")
+
     return df
 
 df = cargar_cubo()
@@ -38,7 +42,7 @@ st.title("Cubo OLAP de Proyectos - Dashboard con Streamlit")
 
 # Si no hay datos, salimos
 if df.empty:
-    st.error("No hay datos en vw_cubo_proyectos. Verifica tu DW.")
+    st.error("No hay datos en el CSV vw_cubo_proyectos.csv. Verifica el archivo.")
     st.stop()
 
 # -----------------------
@@ -47,7 +51,7 @@ if df.empty:
 
 st.sidebar.header("Filtros (Slice / Dice)")
 
-# Filtro por rango de años (corregido)
+# Filtro por rango de años
 anios = sorted(df["anio"].dropna().unique())
 
 if len(anios) == 0:
@@ -72,21 +76,38 @@ industrias_sel = st.sidebar.multiselect(
     default=industrias  # todas por default
 )
 
-# Filtro por estado
-estados = sorted(df["estado"].dropna().unique())
-estados_sel = st.sidebar.multiselect(
-    "Estados del proyecto",
-    options=estados,
-    default=estados
-)
+# Filtro por estado usando el texto (Completado / En progreso)
+if "estado_texto" in df.columns:
+    estados = sorted(df["estado_texto"].dropna().unique())
+    estados_sel = st.sidebar.multiselect(
+        "Estados del proyecto",
+        options=estados,
+        default=estados
+    )
+else:
+    estados = sorted(df["estado"].dropna().unique())
+    estados_sel = st.sidebar.multiselect(
+        "Estados del proyecto",
+        options=estados,
+        default=estados
+    )
 
 # Aplicar filtros (slice/dice)
-mask = (
-    (df["anio"] >= anio_min) &
-    (df["anio"] <= anio_max) &
-    (df["industria"].isin(industrias_sel)) &
-    (df["estado"].isin(estados_sel))
-)
+if "estado_texto" in df.columns:
+    mask = (
+        (df["anio"] >= anio_min) &
+        (df["anio"] <= anio_max) &
+        (df["industria"].isin(industrias_sel)) &
+        (df["estado_texto"].isin(estados_sel))
+    )
+else:
+    mask = (
+        (df["anio"] >= anio_min) &
+        (df["anio"] <= anio_max) &
+        (df["industria"].isin(industrias_sel)) &
+        (df["estado"].isin(estados_sel))
+    )
+
 df_filtrado = df[mask]
 
 st.write(f"Proyectos filtrados: {len(df_filtrado)}")
@@ -123,7 +144,8 @@ dim_filas_opciones = {
     "Cliente": "nombre_cliente",
     "Tipo de proyecto": "tipo_proyecto",
     "Equipo": "nombre_equipo",
-    "Estado": "estado"
+    # Usamos el texto del estado si existe
+    "Estado": "estado_texto" if "estado_texto" in df.columns else "estado",
 }
 
 dim_filas_nombre = st.sidebar.selectbox(
