@@ -40,6 +40,29 @@ df = cargar_cubo()
 
 st.title("Cubo OLAP de Proyectos - Dashboard con Streamlit")
 
+# 🔵 Botón para ir a la app de tu compañero
+url_compa = "https://proyecto-final-inteligencia.streamlit.app/"
+
+st.markdown(
+    f"""
+    <a href="{url_compa}" target="_blank">
+        <button style="
+            padding: 0.7rem 1.4rem;
+            background-color: #1E88E5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        ">
+            Ir a la app principal del proyecto 🚀
+        </button>
+    </a>
+    """,
+    unsafe_allow_html=True
+)
+
 # Si no hay datos, salimos
 if df.empty:
     st.error("No hay datos en el CSV vw_cubo_proyectos.csv. Verifica el archivo.")
