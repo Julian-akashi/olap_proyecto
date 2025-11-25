@@ -13,7 +13,7 @@ DB_USER = "etl_user"
 DB_PASSWORD = "TuPasswordFuerte"
 DB_HOST = "192.168.0.128"
 DB_PORT = 3307
-DB_NAME = "dw_soporte"
+DB_NAME = "db_soporte"
 
 # Ruta LOCAL de tu repo (ajusta esto a tu carpeta real)
 # Ejemplo: r"C:\Users\TU_USUARIO\Videos\olap_proyecto"
