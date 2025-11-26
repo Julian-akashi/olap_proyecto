@@ -15,10 +15,8 @@ import pandas as pd
 
 @st.cache_data
 def cargar_cubo():
-    # Lee el CSV
     df = pd.read_csv("vw_cubo_proyectos.csv")
 
-    # Asegurar tipo datetime y crear nombre de mes
     df["fecha_completa"] = pd.to_datetime(df["fecha_completa"])
 
     mapa_meses = {
@@ -28,11 +26,16 @@ def cargar_cubo():
     }
     df["nombre_mes"] = df["fecha_completa"].dt.month.map(mapa_meses)
 
-    # Mapear estado 0/1 a texto (opcional, pero útil)
-    # 1 = Completado, 0 = En progreso (ajusta si tu lógica es distinta)
+    # ---- estado_texto bien hecho ----
     if "estado" in df.columns:
-        df["estado_texto"] = df["estado"].map({1: "Completado", 0: "En progreso"})
-        df["estado_texto"] = df["estado_texto"].fillna("Desconocido")
+        # Si es numérico (0/1), mapeamos
+        if pd.api.types.is_numeric_dtype(df["estado"]):
+            df["estado_texto"] = df["estado"].map({1: "Completado", 0: "En progreso"})
+        else:
+            # Ya viene como texto: lo usamos directo
+            df["estado_texto"] = df["estado"].astype(str).str.strip()
+
+        df["estado_texto"] = df["estado_texto"].replace("", pd.NA).fillna("Desconocido")
 
     return df
 
