@@ -4,14 +4,6 @@ import pandas as pd
 # -------------------------------------------------
 # Carga de datos desde CSV (exportado de MySQL)
 # -------------------------------------------------
-# Asegúrate de que el archivo "vw_cubo_proyectos.csv"
-# esté en la MISMA carpeta que este olap.py
-# y que tenga las mismas columnas que la vista:
-# anio, trimestre, fecha_completa, industria, estado,
-# nombre_cliente, tipo_proyecto, nombre_equipo,
-# nombre_proyecto, presupuesto, costo_real,
-# desviacion_presupuestal, horas_estimadas_total,
-# horas_reales_total, defectos_reportados, costo_defecto, etc.
 
 @st.cache_data
 def cargar_cubo():
@@ -43,7 +35,6 @@ df = cargar_cubo()
 
 st.title("Cubo OLAP de Proyectos - Dashboard con Streamlit")
 
-# 🔵 Botón para ir a la app de tu compañero
 url_compa = "https://proyecto-final-inteligencia.streamlit.app/"
 
 st.markdown(
@@ -59,7 +50,7 @@ st.markdown(
             cursor: pointer;
             margin-bottom: 1rem;
         ">
-            Ir a la app principal del proyecto 🚀
+            Ir a la app principal del proyecto
         </button>
     </a>
     """,
